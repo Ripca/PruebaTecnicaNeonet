@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35707.178 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WEBNEO", "WEBNEO.csproj", "{37F67D30-BD7A-4D0D-A802-8F3F3A0FFDA6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WEBNEO.Entities", "..\WEBNEO.Entities\WEBNEO.Entities.csproj", "{1B56BCCA-1AE4-4ADE-97E2-9A9B5A21F92D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WEBNEO.Services", "..\WEBNEO.Services\WEBNEO.Services.csproj", "{58ACDD4F-BAD4-453F-B46A-DBA253A6E3E2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{37F67D30-BD7A-4D0D-A802-8F3F3A0FFDA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37F67D30-BD7A-4D0D-A802-8F3F3A0FFDA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37F67D30-BD7A-4D0D-A802-8F3F3A0FFDA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37F67D30-BD7A-4D0D-A802-8F3F3A0FFDA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B56BCCA-1AE4-4ADE-97E2-9A9B5A21F92D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B56BCCA-1AE4-4ADE-97E2-9A9B5A21F92D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B56BCCA-1AE4-4ADE-97E2-9A9B5A21F92D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B56BCCA-1AE4-4ADE-97E2-9A9B5A21F92D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58ACDD4F-BAD4-453F-B46A-DBA253A6E3E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58ACDD4F-BAD4-453F-B46A-DBA253A6E3E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58ACDD4F-BAD4-453F-B46A-DBA253A6E3E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58ACDD4F-BAD4-453F-B46A-DBA253A6E3E2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,478 @@
+@{
+    ViewData["Title"] = "Nueva Venta";
+}
+
+@section Scripts{
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        $(document).ready(function () {
+            feather.replace();
+            
+            let detalles = [];
+            let total = 0;
+
+            // --- DATA TABLES ---
+            const tabClientes = $("#grvClientes").DataTable({
+                responsive: true,
+                "ajax": {
+                    "url": '@Url.Action("Listar", "Clientes")',
+                    "type": "GET",
+                    "datatype": "json"
+                },
+                "columns": [
+                    { "data": "id" },
+                    { "data": "nombre" },
+                    { "data": "email" },
+                    {
+                        "defaultContent": '<button class="btn btn-primary btn-sm btn-seleccionar-cliente"><i class="fas fa-check"></i></button>',
+                        "orderable": false,
+                        "searchable": false,
+                        "width": "30px"
+                    }
+                ],
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+                }
+            });
+
+            const tabProductos = $("#grvProductosConsulta").DataTable({
+                responsive: true,
+                "ajax": {
+                    "url": '@Url.Action("Listar", "Productos")',
+                    "type": "GET",
+                    "datatype": "json"
+                },
+                "columns": [
+                    { "data": "id" },
+                    { "data": "nombre" },
+                    { "data": "precio" },
+                    { "data": "stock" },
+                    {
+                        "data": "id",
+                        "render": function (data, type, row) {
+                            if (row.stock > 0) {
+                                return '<button class="btn btn-primary btn-sm btn-seleccionar-producto"><i class="fas fa-plus"></i></button>';
+                            } else {
+                                return '<button class="btn btn-secondary btn-sm" disabled title="Sin Stock"><i class="fas fa-ban"></i></button>';
+                            }
+                        },
+                        "orderable": false,
+                        "searchable": false,
+                        "width": "30px"
+                    }
+                ],
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+                }
+            });
+
+            // --- SELECCION POR MODAL ---
+            $("#btnModalClientes").click(function () {
+                $("#modalClientes").modal("show");
+            });
+
+            $("#btnModalProductos").click(function () {
+                $("#modalProductos").modal("show");
+            });
+
+            $(document).on("click", ".btn-seleccionar-cliente", function () {
+                const data = tabClientes.row($(this).parents("tr")).data();
+                seleccionarCliente(data);
+                $("#modalClientes").modal("hide");
+            });
+
+            $(document).on("click", ".btn-seleccionar-producto", function () {
+                const data = tabProductos.row($(this).parents("tr")).data();
+                agregarProductoAlCarrito(data);
+                $("#modalProductos").modal("hide");
+                $("#modalProductos").modal("hide");
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Producto agregado',
+                    showConfirmButton: false,
+                    timer: 800
+                });
+            });
+
+            // --- BUSQUEDA DIRECTA ---
+            $("#btnBuscarClienteEmail").click(function() {
+                buscarCliente();
+            });
+
+            $("#txtEmailCliente").on("keypress", function (e) {
+                if (e.which == 13) buscarCliente();
+            });
+
+            function buscarCliente() {
+                let email = $("#txtEmailCliente").val();
+                if(email) {
+                    fetch(`@Url.Action("Buscar", "Clientes")?email=${email}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data) seleccionarCliente(data);
+                        else Swal.fire("No encontrado", "Cliente no registrado", "warning");
+                    }).catch(err => {
+                         Swal.fire("Error", "Error al buscar cliente", "error");
+                    });
+                }
+            }
+
+            $("#btnBuscarProductoId").click(function() {
+                buscarProducto();
+            });
+
+            $("#txtIdProducto").on("keypress", function (e) {
+                if (e.which == 13) buscarProducto();
+            });
+
+            function buscarProducto() {
+                let id = $("#txtIdProducto").val();
+                if(id) {
+                    fetch(`@Url.Action("Obtener", "Productos")?id=${id}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data) {
+                            agregarProductoAlCarrito(data);
+                            $("#txtIdProducto").val("");
+                        }
+                        else Swal.fire("No encontrado", "Producto no registrado", "warning");
+                    }).catch(err => {
+                         Swal.fire("Error", "Error al buscar producto", "error");
+                    });
+                }
+            }
+
+            function seleccionarCliente(cliente) {
+                $("#lblIdCliente").val(cliente.id);
+                $("#txtEmailCliente").val(cliente.email);
+                $("#txtNombreCliente").val(cliente.nombre);
+                $("#txtEmailCliente").addClass("is-valid");
+            }
+
+            // --- LOGICA DE CARRITO ---
+            function agregarProductoAlCarrito(producto) {
+                if (producto.estado != 1) {
+                    Swal.fire("Inactivo", "Este producto está bloqueado", "warning");
+                    return;
+                }
+                if (producto.stock <= 0) {
+                    Swal.fire("Sin Stock", "No hay unidades disponibles de este producto", "warning");
+                    return;
+                }
+                const cantidad = 1;
+                if (producto.stock < cantidad) {
+                    Swal.fire("Stock insuficiente", `Solo quedan ${producto.stock} unidades`, "error");
+                    return;
+                }
+
+                const existente = detalles.find(d => d.ProductoId === producto.id);
+                if (existente) {
+                    if (existente.Cantidad + 1 > producto.stock) {
+                        Swal.fire("Stock insuficiente", `Stock máximo alcanzado (${producto.stock})`, "error");
+                        return;
+                    }
+                    existente.Cantidad++;
+                    existente.Subtotal = existente.Cantidad * existente.PrecioUnitario;
+                } else {
+                    detalles.push({
+                        ProductoId: producto.id,
+                        Nombre: producto.nombre,
+                        Cantidad: cantidad,
+                        PrecioUnitario: producto.precio,
+                        Subtotal: producto.precio * cantidad,
+                        StockMax: producto.stock
+                    });
+                }
+                dibujarTabla();
+            }
+
+            function dibujarTabla() {
+                $("#grvProductosCompra tbody").empty();
+                total = 0;
+                detalles.forEach((d, index) => {
+                    total += d.Subtotal;
+                    $("#grvProductosCompra tbody").append(`
+                        <tr>
+                            <td class="small fw-bold text-muted">${d.ProductoId}</td>
+                            <td>${d.Nombre}</td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm txt-cantidad text-center" data-index="${index}" value="${d.Cantidad}" min="1" max="${d.StockMax}" style="width: 70px;">
+                            </td>
+                            <td class="text-end small">Q. ${d.PrecioUnitario.toFixed(2)}</td>
+                            <td class="text-end small fw-bold">Q. ${d.Subtotal.toFixed(2)}</td>
+                            <td class="text-center">
+                                <button class="btn btn-link btn-sm text-danger btn-eliminar p-0" data-index="${index}">
+                                    <i data-feather="trash-2" class="icon-14"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+                feather.replace();
+                $(".lbl-info-total").text(total.toFixed(2));
+                $(".lbl-info-subtotal").text(total.toFixed(2));
+            }
+
+            $(document).on("change", ".txt-cantidad", function () {
+                const index = $(this).data("index");
+                const nuevaCantidad = parseInt($(this).val());
+                const item = detalles[index];
+
+                if (nuevaCantidad > item.StockMax) {
+                    Swal.fire("Stock insuficiente", `El stock máximo es ${item.StockMax}`, "warning");
+                    $(this).val(item.StockMax);
+                    item.Cantidad = item.StockMax;
+                } else if (nuevaCantidad < 1) {
+                    $(this).val(1);
+                    item.Cantidad = 1;
+                } else {
+                    item.Cantidad = nuevaCantidad;
+                }
+                
+                item.Subtotal = item.Cantidad * item.PrecioUnitario;
+                dibujarTabla();
+            });
+
+            $(document).on("click", ".btn-eliminar", function () {
+                const index = $(this).data("index");
+                detalles.splice(index, 1);
+                dibujarTabla();
+            });
+
+            // --- REGISTRO FINAL ---
+            $("#btnEmitirVenta").click(function () {
+                const clienteId = $("#lblIdCliente").val();
+                if (!clienteId) {
+                    Swal.fire("Advertencia", "Debe seleccionar un cliente", "warning");
+                    return;
+                }
+                if (detalles.length === 0) {
+                    Swal.fire("Advertencia", "Debe agregar al menos un producto", "warning");
+                    return;
+                }
+
+                $("#btnEmitirVenta").prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-2"></span>Procesando...');
+
+                const request = {
+                    ClienteId: parseInt(clienteId),
+                    Detalles: detalles.map(d => ({
+                        ProductoId: d.ProductoId,
+                        Cantidad: d.Cantidad,
+                        PrecioUnitario: d.PrecioUnitario
+                    }))
+                };
+
+                $.ajax({
+                    url: '@Url.Action("Registrar", "Ventas")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(request),
+                    success: function (res) {
+                        if (res.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Venta Exitosa!',
+                                text: 'Se ha registrado la venta',
+                                confirmButtonText: 'Aceptar'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire("Error", res.message, "error");
+                            $("#btnEmitirVenta").prop("disabled", false).html('<i data-feather="check-circle" class="me-2"></i>Emitir Venta');
+                            feather.replace();
+                        }
+                    },
+                    error: function() {
+                        Swal.fire("Error", "Error de comunicación con el servidor", "error");
+                        $("#btnEmitirVenta").prop("disabled", false).html('<i data-feather="check-circle" class="me-2"></i>Emitir Venta');
+                        feather.replace();
+                    }
+                });
+            });
+
+            $("#btnCancelarVenta").click(function(){
+                window.location.reload();
+            });
+        });
+    </script>
+}
+
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold"><i data-feather="shopping-cart" class="me-2 text-primary"></i>Nueva Venta</h3>
+        <p class="text-muted mb-0">Sistema Ventas Neonet</p>
+    </div>
+    <a asp-action="Index" class="btn btn-primary shadow-sm rounded-pill px-4">
+        <i class="fas fa-list-ul me-1 text-warning"></i> Listado de Ventas
+    </a>
+</div>
+
+<div class="card shadow-sm border-0 mb-4 overflow-hidden">
+    <div class="card-body p-4">
+        <!-- BUSQUEDA DE CLIENTE Y PRODUCTO -->
+        <div class="row g-3 mb-4">
+            <div class="col-lg-8">
+                <div class="p-4 bg-white rounded-3 border shadow-sm h-100">
+                    <div class="row g-3">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold text-uppercase text-secondary mb-2">Email Cliente</label>
+                            <div class="input-group shadow-xs">
+                                <span class="input-group-text bg-light border-end-0"><i class="fas fa-envelope text-muted"></i></span>
+                                <input id="txtEmailCliente" type="text" class="form-control border-start-0 ps-0" placeholder="cliente@ejemplo.com">
+                                <button class="btn btn-primary px-3" type="button" id="btnBuscarClienteEmail">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label small fw-bold text-uppercase text-secondary mb-2">Nombre Cliente</label>
+                            <div class="input-group shadow-xs">
+                                <input id="txtNombreCliente" type="text" class="form-control bg-light fw-bold" placeholder="Nombre del cliente..." readonly>
+                                <input type="hidden" id="lblIdCliente">
+                                <button class="btn btn-primary px-4 fw-bold" type="button" id="btnModalClientes">
+                                    <i class="fas fa-user-plus me-1"></i> Consultar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="p-4 bg-white rounded-3 border shadow-sm h-100">
+                    <label class="form-label small fw-bold text-uppercase text-secondary mb-2">ID Producto</label>
+                    <div class="input-group shadow-xs mb-3">
+                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-barcode text-muted"></i></span>
+                        <input id="txtIdProducto" type="text" class="form-control border-start-0 ps-0" placeholder="ID del artículo...">
+                        <button class="btn btn-primary px-3" type="button" id="btnBuscarProductoId">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="text-center">
+                        <button class="btn btn-outline-primary btn-sm fw-bold rounded-pill border-2" type="button" id="btnModalProductos">
+                            <i class="fas fa-box-open me-1"></i> Ver Catálogo Completo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETALLE DE ARTICULOS -->
+        <div class="mb-3">
+            <h6 class="fw-bold text-primary mb-2 border-bottom pb-1">Productos</h6>
+            <div class="table-responsive border rounded bg-white">
+                <table id="grvProductosCompra" class="table table-sm table-hover align-middle mb-0">
+                    <thead class="bg-neonet-purple text-white">
+                        <tr>
+                            <th width="50" class="ps-3">ID</th>
+                            <th>Descripción</th>
+                            <th width="100" class="text-center">Cantidad</th>
+                            <th class="text-end">Precio</th>
+                            <th class="text-end">Subtotal</th>
+                            <th width="60" class="text-center pe-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dinamico -->
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">Carrito vacío</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TOTALES Y ACCIONES (ALINEADOS A LA DERECHA) -->
+        <div class="row justify-content-end">
+            <div class="col-md-4">
+                <div class="p-3 border rounded shadow-sm bg-white mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small fw-bold">SUBTOTAL</span>
+                        <span class="fw-bold">Q. <span class="lbl-info-subtotal">0.00</span></span>
+                    </div>
+                    <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                        <span class="fw-bold text-primary">TOTAL A PAGAR</span>
+                        <span class="fw-bold fs-5 text-primary">Q. <span class="lbl-info-total">0.00</span></span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button id="btnEmitirVenta" class="btn btn-success flex-grow-1 shadow-sm fw-bold py-2">
+                        <i data-feather="check-circle" class="me-1 icon-18"></i>Emitir Venta
+                    </button>
+                    <button id="btnCancelarVenta" class="btn btn-outline-danger px-3 rounded shadow-sm">
+                        <i data-feather="trash-2" class="icon-18"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CLIENTES -->
+<div class="modal fade" id="modalClientes" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-neonet-purple text-white py-2">
+                <h6 class="modal-title fw-bold"><i data-feather="users" class="me-2 icon-16"></i>Clientes</h6>
+                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table id="grvClientes" class="table table-sm table-hover table-bordered w-100">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PRODUCTOS -->
+<div class="modal fade" id="modalProductos" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-neonet-purple text-white py-2">
+                <h6 class="modal-title fw-bold"><i data-feather="package" class="me-2 icon-16"></i>Catálogo</h6>
+                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table id="grvProductosConsulta" class="table table-sm table-hover table-bordered w-100">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Producto</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .icon-14 { width: 14px; height: 14px; }
+    .icon-16 { width: 16px; height: 16px; }
+    .icon-18 { width: 18px; height: 18px; }
+    .bg-neonet-purple { background-color: #6B46C1 !important; }
+    .table thead th { font-size: 0.85rem; }
+    .table tbody td { font-size: 0.9rem; }
+    .form-control-sm, .btn-sm, .input-group-sm > .form-control { font-size: 0.8rem; }
+</style>

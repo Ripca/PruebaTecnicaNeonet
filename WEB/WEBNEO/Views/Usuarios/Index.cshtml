@@ -1,0 +1,132 @@
+@model List<WEBNEO.Entities.UsuarioDTO>
+
+@{
+    ViewData["Title"] = "Usuarios";
+}
+
+<div class="container-fluid">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-user-shield mr-2 text-primary"></i>Gestión de Usuarios</h1>
+            <p class="text-muted">Administración de accesos y perfiles del sistema.</p>
+        </div>
+        <a href="@Url.Action("Create")" class="btn btn-primary shadow-sm rounded-pill px-4">
+            <i class="fas fa-user-plus mr-1 text-warning"></i> Nuevo Usuario
+        </a>
+    </div>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success border-left-success shadow-sm">@TempData["Message"]</div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered" id="tbData" width="100%" cellspacing="0">
+                    <thead class="bg-neonet-purple text-white">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var usuario in Model)
+                        {
+                            <tr>
+                                <td>@usuario.Id</td>
+                                <td>@usuario.Nombre</td>
+                                <td>@usuario.Email</td>
+                                <td><span class="badge badge-info">@usuario.RolNombre</span></td>
+                                <td>
+                                    @if (usuario.Estado == 1)
+                                    {
+                                        <span class="badge badge-success">Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-danger">Bloqueado</span>
+                                    }
+                                </td>
+                                <td>@usuario.FechaRegistro?.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <a href="@Url.Action("Create", new { id = EncodeId(usuario.Id) })" class="btn btn-sm btn-primary mr-1" title="Editar">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </a>
+                                    @if (usuario.Estado == 1)
+                                    {
+                                        <button onclick="cambiarEstado(@usuario.Id, 0)" class="btn btn-sm btn-warning" title="Bloquear">
+                                            <i class="fas fa-lock"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button onclick="cambiarEstado(@usuario.Id, 1)" class="btn btn-sm btn-success" title="Activar">
+                                            <i class="fas fa-lock-open"></i>
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string EncodeId(int id)
+    {
+        var first = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(id.ToString()));
+        var second = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(first));
+        return Uri.EscapeDataString(second);
+    }
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $("#tbData").DataTable({
+                responsive: true,
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+                }
+            });
+        });
+
+        function cambiarEstado(id, nuevoEstado) {
+            Swal.fire({
+                title: '¿Confirmar cambio?',
+                text: "¿Está seguro de cambiar el estado del usuario?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, cambiar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('@Url.Action("CambiarEstado")', { id: id, estado: nuevoEstado }, function(data) {
+                        if (data.success) {
+                            Swal.fire('Listo', data.message, 'success').then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Error', data.message, 'error');
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}
+
+<style>
+    .bg-neonet-purple { background-color: #6B46C1 !important; }
+</style>

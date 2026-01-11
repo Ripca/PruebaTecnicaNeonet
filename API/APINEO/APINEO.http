@@ -1,0 +1,6 @@
+@APINEO_HostAddress = http://localhost:5067
+
+GET {{APINEO_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

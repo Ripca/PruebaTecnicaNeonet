@@ -1,0 +1,79 @@
+/* NeoNet Color Scheme */
+:root {
+    --neonet-purple: #6B46C1;
+    --neonet-purple-dark: #553399;
+    --neonet-yellow: #FFC107;
+    --neonet-yellow-dark: #FFA000;
+}
+
+/* Sidebar NeoNet Purple */
+.bg-gradient-primary {
+    background: linear-gradient(180deg, var(--neonet-purple) 0%, var(--neonet-purple-dark) 100%) !important;
+}
+
+.sidebar-brand-text {
+    color: var(--neonet-yellow) !important;
+}
+
+/* Buttons */
+.btn-neonet-yellow {
+    background-color: var(--neonet-yellow);
+    color: #000;
+    font-weight: 700;
+    border: none;
+}
+
+.btn-neonet-yellow:hover {
+    background-color: var(--neonet-yellow-dark);
+    color: #000;
+}
+
+.btn-primary {
+    background-color: var(--neonet-purple);
+    border-color: var(--neonet-purple);
+}
+
+.btn-primary:hover {
+    background-color: var(--neonet-purple-dark);
+    border-color: var(--neonet-purple-dark);
+}
+
+/* Card Headers */
+.bg-neonet-purple {
+    background-color: var(--neonet-purple) !important;
+}
+
+.card-header.bg-neonet-purple {
+    color: white;
+}
+
+/* Links */
+a.text-neonet-purple {
+    color: var(--neonet-purple);
+}
+
+a.text-neonet-purple:hover {
+    color: var(--neonet-purple-dark);
+}
+
+/* Badges */
+.badge.bg-neonet-yellow {
+    background-color: var(--neonet-yellow);
+    color: #000;
+}
+
+/* Table Styling */
+.table thead {
+    background-color: var(--neonet-purple);
+    color: white;
+}
+
+/* Sidebar active item */
+.sidebar .nav-item.active .nav-link {
+    background-color: var(--neonet-yellow);
+    color: #000 !important;
+}
+
+.sidebar .nav-item .nav-link:hover {
+    background-color: rgba(255, 193, 7, 0.1);
+}

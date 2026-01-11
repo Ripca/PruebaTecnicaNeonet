@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WEBNEO.Entities\WEBNEO.Entities.csproj" />
+    <ProjectReference Include="..\WEBNEO.Services\WEBNEO.Services.csproj" />
+  </ItemGroup>
+
+</Project>

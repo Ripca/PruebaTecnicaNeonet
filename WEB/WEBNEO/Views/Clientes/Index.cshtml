@@ -1,0 +1,187 @@
+@model List<WEBNEO.Entities.Cliente>
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<div class="container-fluid">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-users mr-2 text-primary"></i>Gestión de Clientes</h1>
+            <p class="text-muted">Administre la base de datos de clientes.</p>
+        </div>
+        <button class="btn btn-primary shadow-sm" id="btnNuevo">
+            <i class="fas fa-user-plus mr-1"></i> Nuevo Cliente
+        </button>
+    </div>
+
+    <div class="card shadow mb-4 border-left-primary">
+        <div class="card-header py-3 bg-white">
+            <h6 class="m-0 font-weight-bold text-primary">Listado de Clientes</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered" id="tbData" width="100%" cellspacing="0">
+                    <thead class="bg-light text-primary">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Estado</th>
+                            <th>Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CLIENTE -->
+<div class="modal fade" id="modalCliente" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalTitle">Nuevo Cliente</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="txtId" value="0">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" class="form-control" id="txtNombre">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" class="form-control" id="txtEmail">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardar">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script>
+        let tablaData;
+
+        $(document).ready(function() {
+            tablaData = $('#tbData').DataTable({
+                responsive: true,
+                "ajax": {
+                    "url": '@Url.Action("Listar", "Clientes")',
+                    "type": "GET",
+                    "datatype": "json"
+                },
+                "columns": [
+                    { "data": "id" },
+                    { "data": "nombre" },
+                    { "data": "email" },
+                    { 
+                        "data": "estado",
+                        "render": function(data) {
+                            if (data == 1) return '<span class="badge badge-success">Activo</span>';
+                            else return '<span class="badge badge-danger">Bloqueado</span>';
+                        }
+                    },
+                    { 
+                        "data": "fechaRegistro",
+                        "render": function(data) {
+                            return moment(data).format('DD/MM/YYYY');
+                        }
+                    },
+                    {
+                        "defaultContent": '<button class="btn btn-primary btn-sm btn-edit mr-1"><i class="fas fa-pencil-alt"></i></button>' +
+                                         '<button class="btn btn-warning btn-sm btn-status"><i class="fas fa-sync-alt"></i></button>',
+                        "orderable": false,
+                        "searchable": false,
+                        "width": "90px"
+                    }
+                ],
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+                }
+            });
+        });
+
+        $("#btnNuevo").click(function() {
+            $("#txtId").val(0);
+            $("#txtNombre").val("");
+            $("#txtEmail").val("");
+            $("#modalTitle").text("Nuevo Cliente");
+            $("#modalCliente").modal("show");
+        });
+
+        $('#tbData tbody').on('click', '.btn-edit', function() {
+            let data = tablaData.row($(this).parents('tr')).data();
+            $("#txtId").val(data.id);
+            $("#txtNombre").val(data.nombre);
+            $("#txtEmail").val(data.email);
+            $("#modalTitle").text("Editar Cliente");
+            $("#modalCliente").modal("show");
+        });
+
+        $("#btnGuardar").click(function() {
+            let id = parseInt($("#txtId").val());
+            let request = {
+                id: id,
+                nombre: $("#txtNombre").val(),
+                email: $("#txtEmail").val()
+            };
+
+            let url = id === 0 ? '@Url.Action("Registrar", "Clientes")' : '@Url.Action("Editar", "Clientes")';
+            let method = id === 0 ? 'POST' : 'PUT';
+
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(request)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire("Éxito", data.message, "success");
+                    $("#modalCliente").modal("hide");
+                    tablaData.ajax.reload();
+                } else {
+                    Swal.fire("Error", data.message, "error");
+                }
+            });
+        });
+
+        $('#tbData tbody').on('click', '.btn-status', function() {
+            let data = tablaData.row($(this).parents('tr')).data();
+            let nuevoEstado = data.estado == 1 ? 0 : 1;
+            let msg = data.estado == 1 ? "¿Bloquear cliente?" : "¿Activar cliente?";
+
+            Swal.fire({
+                title: msg,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Sí, cambiar"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`@Url.Action("CambiarEstado", "Clientes")?id=${data.id}&estado=${nuevoEstado}`, {
+                        method: 'PATCH'
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire("Listo", data.message, "success");
+                            tablaData.ajax.reload();
+                        } else {
+                            Swal.fire("Error", data.message, "error");
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}
