@@ -2,7 +2,7 @@ Buen día estimados
 
 Aqui ire modificando las rutas públicas tanto de la api como de la web que se harán a traves de AWS. Esto ya que al apagar las instancias pueden cambiar las Ips de los servicios, por lo que si quieren validarlos deben de ingresar a los siguientes links
 
-Tener en cuenta que por temas de costos ambos servicios se estarán prendiendo en el horario de 10 de la mañana a 3 de la tarde a partir del 12/01/2026 y terminando el 16/01/2026
+Tener en cuenta que por temas de costos ambos servicios se estarán prendiendo en el horario de 9 de la mañana a 4 de la tarde a partir del 12/01/2026 y terminando el 16/01/2026
 
 API: http://52.15.202.209:5000/swagger/index.html
 
