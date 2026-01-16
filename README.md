@@ -4,9 +4,9 @@ Aqui ire modificando las rutas públicas tanto de la api como de la web que se h
 
 Tener en cuenta que por temas de costos ambos servicios se estarán prendiendo en el horario de 9 de la mañana a 4 de la tarde a partir del 12/01/2026 y terminando el 16/01/2026
 
-API: http://3.128.170.168:5000/swagger/index.html
+API: http://18.222.67.187:5000/swagger/index.html
 
-WEB:http://3.15.151.215:5001/
+WEB: http://18.226.4.187:5001/
 
 **Puntos a tomar en cuenta al validar:
   -Se agrego la autenticación por medio de JWE por lo que para ingresar van a tener que colocar un correo y contraseña validos que puede ser cualquiera de los siguientes:
