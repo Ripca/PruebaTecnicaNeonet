@@ -5,6 +5,8 @@ Aqui ire modificando las rutas públicas tanto de la api como de la web que se h
 Tener en cuenta que por temas de costos ambos servicios se estarán prendiendo en el horario de 9 de la mañana a 4 de la tarde a partir del 12/01/2026 y terminando el 16/01/2026
 
 ***Procederé a eliminar las instancias de la api y de la web*** 
+
+
 API: http://18.222.67.187:5000/swagger/index.html
 
 WEB: http://18.226.4.187:5001/
